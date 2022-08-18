@@ -15,7 +15,8 @@ echo "$descr"
 base=$(pwd)
 if [ $GRADESCOPE_DEV ]; then
     source="$base"
-    python="/anaconda/bin/python3"
+    #python="/anaconda/bin/python3"
+    python="python"
 else
     source="$base/source"
     python="/usr/bin/python3"
@@ -26,33 +27,52 @@ cpu_emulator="$source/nand2tetris/tools/CPUEmulator.sh"
 submission="$base/submission"
 cd $submission
 
-codewriter="hvmCodeWriter.py"
-main="hvm.py"
+if [ -f "PythonFileName.txt" ]; then
+    hvm="`cat PythonFileName.txt`"
+    #main="$submission/`cat $submission/PythonFileName.txt`"
+    if [ ! -f "$hvm" ]; then
+        echo "Error: $hvm not found. Please place the full file name (example: 'hasm.py') in the PythonFileName.txt file."
+        exit 1
+    fi
+else
+    # defaults to hasm.py
+    hvm="$submission/hvm.py"
+    #main="$submission/hasm.py"
+fi
+#codewriter="hvmCodeWriter.py"
+#main="hvm.py"
+main="$hvm"
 student_vmtranslator="$python $main"
 
 program=${test##*/}
+
 asmfile="$test/$program.asm"
-outfile="$test/$program.out" 
+outfile="$test/$program.out"
 stdoutfile="$test/$program.stdout"
 tstfile="$test/$program.tst"
-cmpfile="$test/$program.cmp" 
+cmpfile="$test/$program.cmp"
 
 gradefile="$base/results/$stage-$testno.results.json"
 
-if [ ! -f $codewriter ]; then
-    score=0
-    message="hvmCodeWriter.py not submitted"
-    echo "$message"
-else 
+#echo "I am in `pwd` and see `ls`"
+#echo "I am going to look for $asmfile"
+
+#if [ ! -f $codewriter ]; then
+#    score=0
+#    message="hvmCodeWriter.py not submitted"
+#    echo "$message"
+if [ true ]; then
     # Run student VM translator, redirecting stderr and stdout
     if [ "$bootstrap" == "-y" ]; then
         bootstrap=""
     fi
-    command="$student_vmtranslator $bootstrap $test &> $stdoutfile"
+    command="$student_vmtranslator $test $bootstrap &> $stdoutfile"
+    echo "Running '$command' ..."
     eval $command 
 
     if [ ! -f $asmfile ]; then
         # Assembly program not generated
+        echo "Assembly program '$asmfile' not generated"
         score=0
         # Replace " with ' and line breaks with \n to make the JSON formatted correctly.
         IFS=$'\r\n' GLOBIGNORE='*' command eval 'lines=($(tr "\042" "\047" < $stdoutfile))'
