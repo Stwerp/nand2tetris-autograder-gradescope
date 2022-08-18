@@ -14,16 +14,31 @@ echo "$descr"
 base=$(pwd)
 if [ $GRADESCOPE_DEV ]; then
     source="$base"
-    python="/anaconda/bin/python3"
+    python="python"
+    #python="/anaconda/bin/python3"
 else
     source="$base/source"
     python="/usr/bin/python3"
 fi
 
+echo "source $base"
+
 canonical_assembler="$source/nand2tetris/tools/Assembler.sh"
 
 submission="$base/submission"
-main="$submission/hasm.py"
+if [ -f "$submission/PythonFileName.txt" ]; then
+    hasm="`cat $submission/PythonFileName.txt`"
+    #main="$submission/`cat $submission/PythonFileName.txt`"
+    if [ ! -f "$submission/$hasm" ]; then
+        echo "Error: $hasm not found. Please place the full file name (example: 'hasm.py') in the PythonFielName.txt file."
+        exit 1
+    fi
+else
+    # defaults to hasm.py
+    hasm="$hasm"
+    #main="$submission/hasm.py"
+fi
+main="$submission/$hasm"
 student_assembler="$python $main"
 
 asmfile="$submission/$test.asm"
@@ -37,7 +52,7 @@ gradefile="$base/results/$stage-$testno.results.json"
 if [ ! -f $main ]; then
     # Program file not found
     score=0
-    message="hasm.py not submitted"
+    message="$hasm not submitted"
     echo "$message"
 else 
     # Create comparison file
@@ -46,7 +61,8 @@ else
     
     # Run assembler, redirecting stderr and stdout
     command="$student_assembler $asmfile &> $stdoutfile"
-    eval $command 
+    #echo "Running: '$command'"
+    eval $command
 
     if [ ! -f $hackfile ]; then
         # Hack file not generated
