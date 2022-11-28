@@ -4,6 +4,7 @@
 
 # Set up paths and filenames
 base=$(pwd)
+echo $base
 if [ $GRADESCOPE_DEV ]; then
     source="$base"
 else
@@ -49,6 +50,9 @@ case $project in
         cp $projectdir/*.tst $submission
         cp $projectdir/*.cmp $submission
         ;;
+    055)
+        cp -r $projectdir/* $submission
+        ;;
     06|07|08|10|11a|11b)
         cp -r $projectdir/* $submission
         ;;
@@ -77,6 +81,8 @@ case $project in
         type=syntax_analyzer;;
     11a|11b)
         type=compiler;;
+    055)
+        type=python_tester;;
 esac
 
 # Run tests for all listed exercises
@@ -87,6 +93,8 @@ case $project in
         xargs -n4 -I {} /bin/bash -c "$source/test_$type {} {} {} {}" < $testsfile;;
     07|08)
         xargs -n5 -I {} /bin/bash -c "$source/test_$type {} {} {} {}" < $testsfile;;
+    055)
+        xargs -n2 -I {} /bin/bash -c "$source/test_$type {} {} " < $testsfile;;
     *)  echo "Test command not specified for project $project"
         exit 1
         ;;

@@ -1,0 +1,12 @@
+# This is a comment line.
+# Anything after the "#" should
+# be ignored.
+# bunny
+# That one doesn't count!
+
+The output for this file shoudld be 1.
+
+bunn ... coffee is good.
+
+bunny
+giraffe

@@ -1,4 +1,4 @@
-PACKAGE_FILES = spec/run_autograder spec/test_* spec/score_* spec/*.sh spec/nand2tetris/tools/*
+PACKAGE_FILES = spec/run_autograder spec/test_* spec/score_* spec/*.sh spec/nand2tetris/tools/* spec/nand2tetris/sjt/*
 
 %.test: spec/cases.% $(PACKAGE_FILES) 
 	export GRADESCOPE_DEV=true; cd spec; ./run_autograder $*
@@ -11,7 +11,7 @@ PACKAGE_FILES = spec/run_autograder spec/test_* spec/score_* spec/*.sh spec/nand
 clean:
 	rm -f spec/project
 	rm -rf spec/results/*
-	
+
 realclean: clean
 	rm -f *.zip
 	rm -rf spec/submission/*

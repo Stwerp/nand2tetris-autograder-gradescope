@@ -8,14 +8,21 @@ test=$3
 maxscore=$4
 
 case "$stage" in
-    1)  task="tokenizer";;
-    2) task="parser";;
+    0)  task="Compile directory"
+        tdescr=$test
+    ;;
+    1)  task="tokenizer"
+        tdescr="$test.jack"
+    ;;
+    2)  task="parser"
+        tdescr="$test.jack"
+    ;;
     *)  echo "Invalid stage in cases file - contact your instructor"
         exit 1
     ;;
 esac
 
-descr="Stage $stage$testno ($task): $test.jack"
+descr="Stage $stage$testno ($task): $tdescr"
 
 echo "$descr"
 
@@ -23,7 +30,8 @@ echo "$descr"
 base=$(pwd)
 if [ $GRADESCOPE_DEV ]; then
     source="$base"
-    python="/anaconda/bin/python3"
+    #python="/anaconda/bin/python3"
+    python="python"
 else
     source="$base/source"
     python="/usr/bin/python3"
@@ -31,33 +39,43 @@ fi
 
 submission="$base/submission"
 case "$stage" in
-    1)  main="$submission/hjc.py -t"
+    0)  main="$submission/hjc.py"
+    ;;
+    1)  main="$submission/hjc.py"
         cmpfile="$submission/${test}T.cmp.xml"
-        outfile="$submission/${test}T.out.xml"
+        outfile="$submission/${test}T.xml"
     ;;
     2) main="$submission/hjc.py"
         cmpfile="$submission/${test}.cmp.xml"
-        outfile="$submission/${test}.out.xml"
+        outfile="$submission/${test}.xml"
     ;;
     *)  echo "Invalid stage in cases file - contact your instructor"
         exit 1
     ;;
 esac
 
+compdir="$submission/$test"
 jackfile="$submission/$test.jack"
 stdoutfile="$submission/$test.stdout"
 gradefile="$base/results/$stage-$testno.results.json"
 
-if [ ! -f "$submission/hjcTokenizer.py" ]; then
-    score=0
-    message="hjcTokenizer.py not submitted"
-elif ( [ "$stage" == "II" ] && [ ! -f "$submission/hjcCompile.py" ] ); then
-    score=0
-    message="hjcCompile.py not submitted"
-else 
+#if [ ! -f "$submission/hjcTokenizer.py" ]; then
+#    score=0
+#    message="hjcTokenizer.py not submitted"
+#elif ( [ "$stage" == "II" ] && [ ! -f "$submission/hjcCompile.py" ] ); then
+#    score=0
+#    message="hjcCompile.py not submitted"
+if [ "$stage" == "0" ]; then
+    # Compile the directories
+    command="$python $main $compdir &> $stdoutfile"
+    echo "Running '$command' ..."
+    eval $command
+elif [ true ]; then
     # Run main, redirecting stderr and stdout
-    command="$python $main $jackfile &> $stdoutfile"
-    eval $command 
+    #command="$python $main $jackfile &> $stdoutfile"
+    #echo "Running '$command' ..."
+    #eval $command
+    echo "Comparing '$outfile' ..."
 
     if [ ! -f $outfile ]; then
         # Output file not generated
@@ -65,7 +83,7 @@ else
         # Replace " with ' and line breaks with \n to make the JSON formatted correctly.
         IFS=$'\r\n' GLOBIGNORE='*' command eval 'lines=($(tr "\042" "\047" < $stdoutfile))'
         len=${#lines[@]}
-        message=""
+        message="Output file not generated :-/"
         for (( i=0; i<$len; i++ )); do 
             message="$message\n${lines[$i]}"
         done

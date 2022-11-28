@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2019 Janet Davis CC-BY-NC-SA
+# Copyright 2022 Stewart Thomas CC-BY-NC-SA
 
 # Get assembler test info
 stage=$1
@@ -23,7 +23,7 @@ fi
 
 echo "source $base"
 
-canonical_assembler="$source/nand2tetris/tools/Assembler.sh"
+canonical_assembler="$source/nand2tetris/sjt/bunny.sh"
 
 submission="$base/submission"
 if [ -f "$submission/PythonFileName.txt" ]; then
@@ -34,20 +34,30 @@ if [ -f "$submission/PythonFileName.txt" ]; then
         exit 1
     fi
 else
-    # defaults to hasm.py
-    #hasm="$hasm"
-    hasm="hasm.py"
-    #main="$submission/hasm.py"
+    # defaults to bunny.py
+    hasm="bunny.py" # default value
+    # hasm="$hasm"
+    # main="$submission/hasm.py"
 fi
 main="$submission/$hasm"
-student_assembler="$python $main"
+student_program="$python $main"
 
-asmfile="$submission/$test.asm"
-cmpfile="$submission/$test.cmp" 
-hackfile="$submission/$test.hack"
-
-outfile="$submission/$test.out" 
-stdoutfile="$submission/$test.stdout"
+#testfile="$submission/$test" # could be txt or a directory
+if [ $stage = A ]
+then
+    # is single file
+    testfile="$submission/$test.txt"
+    cmpfile="$submission/$test.cmp"
+    outfile="$submission/$test.out"
+    stdoutfile="$submission/$test.stdout"
+else
+    # is a directory
+    program=${test##*/}
+    testfile="$submission/$test"
+    cmpfile="$submission/$test/$program.cmp"
+    outfile="$submission/$test/$program.out"
+    stdoutfile="$submission/$test/$program.stdout"
+fi
 gradefile="$base/results/$stage-$testno.results.json"
 
 if [ ! -f $main ]; then
@@ -55,18 +65,19 @@ if [ ! -f $main ]; then
     score=0
     message="$hasm not submitted"
     echo "$message"
-else 
+else
     # Create comparison file
-    command="$canonical_assembler $asmfile; mv $hackfile $cmpfile"
-    eval $command
-    
-    # Run assembler, redirecting stderr and stdout
-    command="$student_assembler $asmfile &> $stdoutfile"
-    #echo "Running: '$command'"
+    command="$canonical_assembler $testfile; mv $outfile $cmpfile"
+    echo "Running '$command'"
     eval $command
 
-    if [ ! -f $hackfile ]; then
-        # Hack file not generated
+    # Run assembler, redirecting stderr and stdout
+    command="$student_program $testfile &> $stdoutfile"
+    echo "Running: '$command'"
+    eval $command
+
+    if [ ! -f $outfile ]; then
+        # Out file not generated
         score=0
         # Replace " with ' and line breaks with \n to make the JSON formatted correctly.
         IFS=$'\r\n' GLOBIGNORE='*' command eval 'lines=($(tr "\042" "\047" < $stdoutfile))'
@@ -77,13 +88,13 @@ else
         done
     else
         # Hack file generated - compare to standard results
-        result=`/usr/bin/diff -q $cmpfile $hackfile`
+        result=`/usr/bin/diff -q $cmpfile $outfile`
         if [[ $result == *differ* ]]; then
             score=0
-            message="Output differs from the standard assembler"
+            message="Output differs from the standard bunny counter"
         else
             score=$maxscore
-            message="Output is identical to the standard assembler"
+            message="Output is identical to the standard bunny counter"
         fi
     fi
 fi
