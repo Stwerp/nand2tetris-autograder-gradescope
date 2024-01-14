@@ -70,6 +70,8 @@ if [ "$stage" == "0" ]; then
     command="$python $main $compdir &> $stdoutfile"
     echo "Running '$command' ..."
     eval $command
+    score="0"
+    message="Done Compiling..."
 elif [ true ]; then
     # Run main, redirecting stderr and stdout
     #command="$python $main $jackfile &> $stdoutfile"
@@ -90,7 +92,7 @@ elif [ true ]; then
     else
         # Output file generated - compare to standard results
         # ignoring differences in whitespace
-        result=`/usr/bin/diff -w -q $cmpfile $outfile`
+        result=`/usr/bin/diff -w -B -q $cmpfile $outfile`
         if [[ $result == *differ* ]]; then
             score=0
             message="Output differs from expected output"
