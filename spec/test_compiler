@@ -45,7 +45,7 @@ if [ $GRADESCOPE_DEV ]; then
 else
     source="$base/source"
     python="/usr/bin/python3"
-    grep="/urs/bin/grep"
+    grep="/usr/bin/grep"
     comm="/usr/bin/comm --nocheck-order"
 fi
 
