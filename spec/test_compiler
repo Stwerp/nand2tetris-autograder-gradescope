@@ -38,13 +38,14 @@ esac
 base=$(pwd)
 if [ $GRADESCOPE_DEV ]; then
     source="$base"
-    python="/anaconda/bin/python3"
+    #python="/anaconda/bin/python3"
+    python="python"
     grep="/usr/bin/grep"
-    comm="/usr/bin/comm"
+    comm="/usr/bin/comm --nocheck-order"
 else
     source="$base/source"
     python="/usr/bin/python3"
-    grep="/bin/grep"
+    grep="/urs/bin/grep"
     comm="/usr/bin/comm --nocheck-order"
 fi
 
@@ -61,19 +62,22 @@ vmfile="$submission/$test.vm"
 stdoutfile="$submission/$test.stdout"
 gradefile="$base/results/$stage-$testno.results.json"
 
-if [ ! -f "$submission/hjcTokenizer.py" ]; then
-    score=0
-    message="hjcTokenizer.py not submitted"
-elif [ ! -f "$submission/hjcCompile.py" ]; then
-    score=0
-    message="hjcCompile.py not submitted"
-else 
+#if [ ! -f "$submission/hjcTokenizer.py" ]; then
+#    score=0
+#    message="hjcTokenizer.py not submitted"
+#elif [ ! -f "$submission/hjcCompile.py" ]; then
+#    score=0
+#    message="hjcCompile.py not submitted"
+#else
+if [ true ]; then # just here to keep structure
     # Create comparison file
     command="$canonical_compiler $jackfile; mv $vmfile $cmpfile"
+    echo "Running '$command' ..."
     eval $command
 
     # Run main, redirecting stderr and stdout
     command="$python $main $jackfile &> $stdoutfile"
+    echo "Running '$command' ..."
     eval $command 
 
     if [ ! -f $vmfile ]; then
@@ -91,8 +95,8 @@ else
         message="Output file is empty"
     else
         # Output file generated - compare to standard results
-        # ignoring differences in whitespace
-        result=`/usr/bin/diff -w -q $cmpfile $vmfile`
+        # ignoring differences in whitespace and end-of-line comments
+        result=`/usr/bin/diff -w -q -I '//.*' $cmpfile $vmfile`
         if [[ $result != *differ* ]]; then
             score=$maxscore
             message="Output is identical to the expected output"
@@ -112,8 +116,13 @@ else
             if [[ $score == 0 ]]; then
                 message="Output contains none of the expected keywords"
             else
+                # strip all comments and blank lines first
+                sed -i.orig '\~^[[:blank:]]*//~d; s~//.*~~' $vmfile
                 numerator=`$comm -1 -2 $cmpfile $vmfile | wc -l`
+                echo "$numerator lines in common"
                 numerator=$((numerator - `$comm -1 -3 $cmpfile $vmfile | wc -l`))
+                echo "$numerator after subtracting unique lines"
+                #numerator=$((`$comm -1 -3 $cmpfile $vmfile | wc -l` - numerator))
                 denominator=`cat $cmpfile | wc -l`
                 frac=`echo "100*$numerator/$denominator" | bc`
                 commonscore=`echo "$maxscore*$numerator/$denominator" | bc`
