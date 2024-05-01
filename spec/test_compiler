@@ -118,20 +118,34 @@ if [ true ]; then # just here to keep structure
             else
                 # strip all comments and blank lines first
                 sed -i.orig '\~^[[:blank:]]*//~d; s~//.*~~' $vmfile
-                numerator=`$comm -1 -2 $cmpfile $vmfile | wc -l`
+                numerator=`$comm -1 -2 $cmpfile $vmfile | wc -l` # common lines
                 echo "$numerator lines in common"
-                numerator=$((numerator - `$comm -1 -3 $cmpfile $vmfile | wc -l`))
-                echo "$numerator after subtracting unique lines"
-                #numerator=$((`$comm -1 -3 $cmpfile $vmfile | wc -l` - numerator))
+                # not sure what this one does...
+                #numerator=$((numerator - `$comm -1 -3 $cmpfile $vmfile | wc -l`))
+                #echo "$numerator after subtracting unique lines"
                 denominator=`cat $cmpfile | wc -l`
                 frac=`echo "100*$numerator/$denominator" | bc`
                 commonscore=`echo "$maxscore*$numerator/$denominator" | bc`
-                if [[ $commonscore > $score ]]; then
-                    score=$commonscore
-                    message="Output file is $frac% identical to the expected output"
-                else
-                    message="Output file contains keywords (${kwlist:1}) but differs significantly from the expected output"
-                fi
+                message="Output file is $frac% identical to standard Jack compiler output."
+                message="$message\n A comparison is below:\n"
+                message="$message Std. Jack File                         YOUR FILE\n"
+                message="$message --------------                         ---------\n"
+                result=`/usr/bin/diff -w -y -I '//.*' $cmpfile $vmfile`
+                # Replace " with ' and line breaks with \n to make the JSON formatted correctly.
+                # "expand" replaces tabs with spaces.
+                IFS=$'\r\n' GLOBIGNORE='*' command eval 'lines=($(echo "$result" | expand | tr "\042" "\047"))'
+                len=${#lines[@]}
+                for (( i=0; i<$len; i++ )); do
+                    message="$message\n${lines[$i]}"
+                done
+                score=$commonscore
+                #if [[ $commonscore > $score ]]; then
+                #    score=$commonscore
+                #    message="Output file is $frac% identical to the expected output"
+                #else
+                #    message="Output file contains keywords (${kwlist:1}) but differs significantly from the expected output"
+                #fi
+
             fi
         fi
     fi
