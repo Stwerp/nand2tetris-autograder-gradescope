@@ -10,6 +10,9 @@ maxscore=$4
 descr="Stage $stage$testno: $test.jack"
 echo "$descr"
 
+#default
+keywords=(label push pop)
+
 case $test in
     'Seven/Main')   
         keywords=(function Main main push constant call Math multiply add Output printInt pop temp return)
