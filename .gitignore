@@ -2,7 +2,6 @@
 /spec/results/*
 /spec/project
 *.zip
-*.py
 __pycache__/*
 *.dat
 *.swp
